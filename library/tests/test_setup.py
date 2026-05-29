@@ -24,33 +24,33 @@ def test_set_fan_speed(lgpio, apa102, FanShim):
     fanshim = FanShim()
     result = fanshim.set_fan_speed(0.5)
     assert result == 0.5
-    lgpio.tx_pwm.assert_called_with(42, 18, 25000, 50.0)
+    lgpio.tx_pwm.assert_called_with(42, 18, 1000, 50.0)
 
 
 def test_set_fan_speed_clamp_high(lgpio, apa102, FanShim):
     fanshim = FanShim()
     result = fanshim.set_fan_speed(2.0)
     assert result == 1.0
-    lgpio.tx_pwm.assert_called_with(42, 18, 25000, 100.0)
+    lgpio.tx_pwm.assert_called_with(42, 18, 1000, 100.0)
 
 
 def test_set_fan_speed_clamp_low(lgpio, apa102, FanShim):
     fanshim = FanShim()
     result = fanshim.set_fan_speed(-1.0)
     assert result == 0.0
-    lgpio.tx_pwm.assert_called_with(42, 18, 25000, 0.0)
+    lgpio.tx_pwm.assert_called_with(42, 18, 1000, 0.0)
 
 
 def test_set_fan_on(lgpio, apa102, FanShim):
     fanshim = FanShim()
     fanshim.set_fan(True)
-    lgpio.tx_pwm.assert_called_with(42, 18, 25000, 100.0)
+    lgpio.tx_pwm.assert_called_with(42, 18, 1000, 100.0)
 
 
 def test_set_fan_off(lgpio, apa102, FanShim):
     fanshim = FanShim()
     fanshim.set_fan(False)
-    lgpio.tx_pwm.assert_called_with(42, 18, 25000, 0.0)
+    lgpio.tx_pwm.assert_called_with(42, 18, 1000, 0.0)
 
 
 def test_get_fan(lgpio, apa102, FanShim):

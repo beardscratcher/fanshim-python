@@ -27,7 +27,7 @@ class FanShim():
         """Set fan speed 0.0 (off) to 1.0 (full). Returns clamped value."""
         speed = max(0.0, min(1.0, float(speed)))
         self._fan_speed = speed
-        lgpio.tx_pwm(self._h, self._pin_fancontrol, 25000, speed * 100)
+        lgpio.tx_pwm(self._h, self._pin_fancontrol, 1000, speed * 100)
         return speed
 
     def set_fan(self, fan_state):
