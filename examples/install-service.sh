@@ -61,7 +61,7 @@ fi
 
 # System dependencies via apt
 printf "Installing system dependencies...\n"
-apt-get install -y python3-lgpio python3-psutil python3-venv python3-spidev build-essential python3-dev
+apt-get install -y python3-lgpio python3-rpi.gpio python3-psutil python3-venv python3-spidev build-essential python3-dev
 
 # Create venv with access to apt-installed packages
 printf "Creating venv at %s...\n" "$VENV_PATH"
