@@ -1,7 +1,4 @@
-"""Test configuration.
-These allow the mocking of various Python modules
-that might otherwise have runtime side-effects.
-"""
+"""Test configuration."""
 import sys
 import mock
 import pytest
@@ -9,22 +6,21 @@ import pytest
 
 @pytest.fixture(scope='function', autouse=False)
 def FanShim():
+    """Yield the FanShim class with hardware modules mocked via other fixtures."""
     import fanshim
     yield fanshim.FanShim
     del sys.modules['fanshim']
 
 
 @pytest.fixture(scope='function', autouse=False)
-def GPIO():
-    """Mock RPi.GPIO module."""
-    GPIO = mock.MagicMock()
-    # Fudge for Python < 37 (possibly earlier)
-    sys.modules['RPi'] = mock.Mock()
-    sys.modules['RPi'].GPIO = GPIO
-    sys.modules['RPi.GPIO'] = GPIO
-    yield GPIO
-    del sys.modules['RPi']
-    del sys.modules['RPi.GPIO']
+def lgpio():
+    """Mock lgpio module."""
+    lgpio = mock.MagicMock()
+    lgpio.gpiochip_open.return_value = 42
+    lgpio.SET_PULL_UP = 0
+    sys.modules['lgpio'] = lgpio
+    yield lgpio
+    del sys.modules['lgpio']
 
 
 @pytest.fixture(scope='function', autouse=False)
@@ -52,4 +48,3 @@ def atexit():
     sys.modules['atexit'] = atexit
     yield atexit
     del sys.modules['atexit']
-
