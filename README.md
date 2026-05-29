@@ -80,25 +80,33 @@ The speed curve is defined as comma-separated `temp:speed%` breakpoints. Fan spe
 
 ### GPIO backend: RPi.GPIO → lgpio
 
-`RPi.GPIO` is deprecated on Linux kernel 5.x+ and removed from the library. All GPIO and PWM control now uses `lgpio`, which is maintained and compatible with kernel 6.x character device GPIO.
+**Why:** `RPi.GPIO` is deprecated and unsupported on Linux kernel 5.x+. On kernel 6.x (Raspberry Pi OS / DietPi), it either fails silently or requires a compatibility shim. `lgpio` is the actively maintained replacement built on the modern kernel GPIO character device interface.
+
+`RPi.GPIO` has been removed from the library. All GPIO and PWM control now uses `lgpio`.
 
 **Impact:** `python3-lgpio` is required (installed via apt by `install-service.sh`). The `pin_button` and `button_poll_delay` constructor parameters are gone — button support has been removed entirely.
 
 ### PWM fan speed control
 
-Fan control was binary (on/off). It is now variable speed via hardware PWM at 1000 Hz. The fan ramps up and down proportionally to temperature rather than switching abruptly, reducing wear from thermal cycling and lowering noise at moderate temperatures.
+**Why:** Binary on/off fan control causes premature bearing wear from repeated full-speed spin-up and spin-down cycles. A fan that briefly hits 65°C and drops back to 58°C will cycle continuously, stressing the motor and creating noise. Variable PWM speed means the fan can maintain a low steady speed that keeps temperatures stable without cycling.
+
+Fan control is now variable speed via PWM at 1000 Hz. The fan ramps proportionally to temperature rather than switching abruptly.
 
 **Impact:** `set_fan_speed(float)` is the primary new API. `set_fan(bool)` still works as a wrapper. `get_fan()` now returns a `float` (0.0–1.0) instead of an `int` (0/1).
 
 ### Temperature→speed curve replaces thresholds
 
-`automatic.py` previously used binary on/off thresholds (`--on-threshold`, `--off-threshold`). It now uses a configurable step curve (`--speed-steps`) with linear interpolation and a minimum speed floor (`--min-speed`) to prevent motor stall at low duty cycles.
+**Why:** A single on/off threshold requires tuning two values that fight each other (hysteresis). A step curve is more intuitive — define what speed you want at what temperature — and naturally handles the transition zone without oscillation.
+
+`automatic.py` now uses a configurable step curve (`--speed-steps`) with linear interpolation and a minimum speed floor (`--min-speed`) to prevent motor stall at low duty cycles.
 
 **Impact:** All previous CLI args to `automatic.py` and `install-service.sh` have changed. Re-run `install-service.sh` to migrate.
 
 ### Modernised install script
 
-`install-service.sh` now uses `apt` for system dependencies and a `--system-site-packages` venv for the fanshim library, avoiding PEP 668 pip conflicts on Debian Trixie / DietPi. It also stops and disables any previous service version before installing the new one.
+**Why:** Debian Trixie (the base for current DietPi and Raspberry Pi OS) enforces PEP 668, which prevents global `pip install`. The old script would fail with "externally managed environment" errors. Additionally, `RPi.GPIO` version checks via `pkg_resources` (also deprecated) would crash before the service was ever installed.
+
+`install-service.sh` now uses `apt` for system dependencies and a `--system-site-packages` venv for the fanshim library. It also stops and disables any previous service version before installing the new one.
 
 # Alternate Software
 
