@@ -1,5 +1,17 @@
 # Fan Shim for Raspberry Pi
 
+# Hardware Requirements
+
+| Component | Requirement |
+|-----------|-------------|
+| Board | Raspberry Pi 4 (tested: 8GB) |
+| HAT | Pimoroni Fan Shim |
+| OS | DietPi v10.4+ or Raspberry Pi OS (Debian Trixie/Bookworm) |
+| Kernel | 5.x+ (tested: 6.18 aarch64) |
+| Python | 3.11+ (tested: 3.13) |
+
+> **Not tested on:** Raspberry Pi 3 or earlier, Pi 5, 32-bit OS images.
+
 # Installing
 
 Clone and run the install script — this handles all dependencies via apt and sets up a systemd service:
