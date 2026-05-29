@@ -15,6 +15,11 @@ class FanShim():
         lgpio.gpio_claim_output(self._h, self._pin_fancontrol)
 
         if not self._disable_led:
+            try:
+                import RPi.GPIO as GPIO
+                GPIO.setwarnings(False)
+            except ImportError:
+                pass
             self._led = apa102.APA102(1, 15, 14, None, brightness=0.05)
 
         atexit.register(self._cleanup)
