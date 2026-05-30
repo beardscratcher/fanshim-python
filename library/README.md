@@ -1,26 +1,46 @@
 # Fan Shim for Raspberry Pi
 
-[![Build Status](https://travis-ci.com/pimoroni/fanshim-python.svg?branch=master)](https://travis-ci.com/pimoroni/fanshim-python)
-[![Coverage Status](https://coveralls.io/repos/github/pimoroni/fanshim-python/badge.svg?branch=master)](https://coveralls.io/github/pimoroni/fanshim-python?branch=master)
-[![PyPi Package](https://img.shields.io/pypi/v/fanshim.svg)](https://pypi.python.org/pypi/fanshim)
-[![Python Versions](https://img.shields.io/pypi/pyversions/fanshim.svg)](https://pypi.python.org/pypi/fanshim)
+> **Fork of [pimoroni/fanshim-python](https://github.com/pimoroni/fanshim-python)**
+>
+> This fork modernises the library for Linux kernel 5.x / 6.x (Raspberry Pi OS / DietPi), where the original RPi.GPIO backend fails silently or requires a compatibility shim. Key changes: GPIO control migrated to **lgpio** (the actively maintained successor), **PWM variable-speed** fan control replacing binary on/off switching, a **temperature→speed step curve** replacing fixed thresholds, and an updated install script compatible with the PEP 668 externally-managed Python environment on Debian Trixie.
+>
+> Button support has been removed. See [`examples/button.py`](examples/button.py) for the original API if you want to re-implement it.
+
+# Hardware Requirements
+
+| Component | Requirement |
+|-----------|-------------|
+| Board | Raspberry Pi 4 (tested: 8GB) |
+| HAT | Pimoroni Fan Shim |
+| OS | DietPi v10.4+ or Raspberry Pi OS (Debian Trixie/Bookworm) |
+| Kernel | 5.x+ (tested: 6.18 aarch64) |
+| Python | 3.11+ (tested: 3.13) |
+
+> **Not tested on:** Raspberry Pi 3 or earlier, Pi 5, 32-bit OS images.
 
 # Installing
 
-Stable library from PyPi:
+Clone and run the install script — this handles all dependencies via apt and sets up a systemd service:
 
-* Just run `sudo pip install fanshim`
+```bash
+git clone https://github.com/beardscratcher/fanshim-python
+cd fanshim-python
+sudo ./install-service.sh
+```
 
-Latest/development library from GitHub:
+The installer accepts options to tune the speed curve:
 
-* `apt install git python3-pip`
-* `git clone https://github.com/pimoroni/fanshim-python`
-* `cd fanshim-python`
-* `sudo ./install.sh`
+```bash
+sudo ./install-service.sh \
+  --speed-steps "50:0,60:30,70:60,80:100" \
+  --min-speed 20 \
+  --delay 2 \
+  --brightness 255
+```
 
 # Reference
 
-You should first set up an instance of the `FANShim` class, eg:
+Set up an instance of the `FanShim` class:
 
 ```python
 from fanshim import FanShim
@@ -29,28 +49,23 @@ fanshim = FanShim()
 
 ## Fan
 
-Turn the fan on with:
+Set fan to a specific speed (0.0 = off, 1.0 = full):
+
+```python
+fanshim.set_fan_speed(0.75)  # 75% speed
+```
+
+Turn the fan fully on or off:
 
 ```python
 fanshim.set_fan(True)
-```
-
-Turn it off with:
-
-```python
 fanshim.set_fan(False)
 ```
 
-You can also toggle the fan with:
+Get current fan speed (returns float 0.0–1.0):
 
 ```python
-fanshim.toggle_fan()
-```
-
-You can check the status of the fan with:
-
-```python
-fanshim.get_fan() # returns 1 for 'on', 0 for 'off'
+fanshim.get_fan()
 ```
 
 ## LED
@@ -63,83 +78,67 @@ Set it to any colour with:
 fanshim.set_light(r, g, b)
 ```
 
-Arguments r, g and b should be numbers between 0 and 255 that describe the colour you want.
+Arguments r, g and b should be numbers between 0 and 255. For example, full red:
 
-For example, full red:
-
-```
+```python
 fanshim.set_light(255, 0, 0)
 ```
 
-## Button
+## Automatic Temperature Control
 
-Fan Shim includes a button, you can bind actions to press, release and hold events.
+`examples/automatic.py` runs a control loop that maps CPU temperature to fan speed using a configurable step curve. Run it directly or via the systemd service installed by `install-service.sh`.
 
-Do something when the button is pressed:
-
-```python
-@fanshim.on_press()
-def button_pressed():
-    print("The button has been pressed!")
+```bash
+python3 examples/automatic.py --speed-steps "50:0,60:30,70:60,80:100" --verbose
 ```
 
-Or when it has been released:
+The speed curve is defined as comma-separated `temp:speed%` breakpoints. Fan speed is linearly interpolated between steps. `--min-speed` sets a floor to prevent motor stall at low duty cycles.
 
-```python
-@fanshim.on_release()
-def button_released(was_held):
-    print("The button has been pressed!")
-```
+# Changes in 0.1.0
 
-Or when it's been pressed long enough to trigger a hold:
+### GPIO backend: RPi.GPIO → lgpio
 
-```python
-fanshim.set_hold_time(2.0)
+**Why:** `RPi.GPIO` is deprecated and unsupported on Linux kernel 5.x+. On kernel 6.x (Raspberry Pi OS / DietPi), it either fails silently or requires a compatibility shim. `lgpio` is the actively maintained replacement built on the modern kernel GPIO character device interface.
 
-@fanshim.on_hold()
-def button_held():
-    print("The button was held for 2 seconds")
-```
+`RPi.GPIO` has been removed from the library. All GPIO and PWM control now uses `lgpio`.
 
-The function you bind to `on_release()` is passed a `was_held` parameter,
-this lets you know if the button was held down for longer than the configured
-hold time. If you want to bind an action to "press" and another to "hold" you
-should check this flag and perform your action in the `on_release()` handler:
+**Impact:** `python3-lgpio` is required (installed via apt by `install-service.sh`). The `pin_button` and `button_poll_delay` constructor parameters are gone — button support has been removed entirely.
 
-```python
-@fanshim.on_release()
-def button_released(was_held):
-    if was_held:
-        print("Long press!")
-    else:
-        print("Short press!")
-```
+### PWM fan speed control
 
-To configure the amount of time the button should be held (in seconds), use:
+**Why:** Binary on/off fan control causes premature bearing wear from repeated full-speed spin-up and spin-down cycles. A fan that briefly hits 65°C and drops back to 58°C will cycle continuously, stressing the motor and creating noise. Variable PWM speed means the fan can maintain a low steady speed that keeps temperatures stable without cycling.
 
-```python
-fanshim.set_hold_time(number_of_seconds)
-```
+Fan control is now variable speed via PWM at 1000 Hz. The fan ramps proportionally to temperature rather than switching abruptly.
 
-If you need to stop Fan Shim from polling the button, use:
+**Impact:** `set_fan_speed(float)` is the primary new API. `set_fan(bool)` still works as a wrapper. `get_fan()` now returns a `float` (0.0–1.0) instead of an `int` (0/1).
 
-```python
-fanshim.stop_polling()
-```
+### Temperature→speed curve replaces thresholds
 
-You can start it again with:
+**Why:** A single on/off threshold requires tuning two values that fight each other (hysteresis). A step curve is more intuitive — define what speed you want at what temperature — and naturally handles the transition zone without oscillation.
 
-```python
-fanshim.start_polling()
-```
+`automatic.py` now uses a configurable step curve (`--speed-steps`) with linear interpolation and a minimum speed floor (`--min-speed`) to prevent motor stall at low duty cycles.
+
+**Impact:** All previous CLI args to `automatic.py` and `install-service.sh` have changed. Re-run `install-service.sh` to migrate.
+
+### Modernised install script
+
+**Why:** Debian Trixie (the base for current DietPi and Raspberry Pi OS) enforces PEP 668, which prevents global `pip install`. The old script would fail with "externally managed environment" errors. Additionally, `RPi.GPIO` version checks via `pkg_resources` (also deprecated) would crash before the service was ever installed.
+
+`install-service.sh` now uses `apt` for system dependencies and a `--system-site-packages` venv for the fanshim library. It also stops and disables any previous service version before installing the new one.
 
 # Alternate Software
 
 * Fan SHIM in C, using WiringPi - https://github.com/flobernd/raspi-fanshim
 * Fan SHIM in C++, using libgpiod - https://github.com/daviehh/fanshim-cpp
 
-
 # Changelog
+0.1.0
+-----
+
+* Replace RPi.GPIO with lgpio
+* Add set_fan_speed for PWM control
+* Remove button support
+
 0.0.5
 -----
 

@@ -1,5 +1,11 @@
 # Fan Shim for Raspberry Pi
 
+> **Fork of [pimoroni/fanshim-python](https://github.com/pimoroni/fanshim-python)**
+>
+> This fork modernises the library for Linux kernel 5.x / 6.x (Raspberry Pi OS / DietPi), where the original RPi.GPIO backend fails silently or requires a compatibility shim. Key changes: GPIO control migrated to **lgpio** (the actively maintained successor), **PWM variable-speed** fan control replacing binary on/off switching, a **temperature→speed step curve** replacing fixed thresholds, and an updated install script compatible with the PEP 668 externally-managed Python environment on Debian Trixie.
+>
+> Button support has been removed. See [`examples/button.py`](examples/button.py) for the original API if you want to re-implement it.
+
 # Hardware Requirements
 
 | Component | Requirement |
@@ -19,13 +25,13 @@ Clone and run the install script — this handles all dependencies via apt and s
 ```bash
 git clone https://github.com/beardscratcher/fanshim-python
 cd fanshim-python
-sudo ./examples/install-service.sh
+sudo ./install-service.sh
 ```
 
 The installer accepts options to tune the speed curve:
 
 ```bash
-sudo ./examples/install-service.sh \
+sudo ./install-service.sh \
   --speed-steps "50:0,60:30,70:60,80:100" \
   --min-speed 20 \
   --delay 2 \
