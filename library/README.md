@@ -38,52 +38,6 @@ sudo ./install-service.sh \
   --brightness 255
 ```
 
-# Reference
-
-Set up an instance of the `FanShim` class:
-
-```python
-from fanshim import FanShim
-fanshim = FanShim()
-```
-
-## Fan
-
-Set fan to a specific speed (0.0 = off, 1.0 = full):
-
-```python
-fanshim.set_fan_speed(0.75)  # 75% speed
-```
-
-Turn the fan fully on or off:
-
-```python
-fanshim.set_fan(True)
-fanshim.set_fan(False)
-```
-
-Get current fan speed (returns float 0.0–1.0):
-
-```python
-fanshim.get_fan()
-```
-
-## LED
-
-Fan Shim includes one RGB APA-102 LED.
-
-Set it to any colour with:
-
-```python
-fanshim.set_light(r, g, b)
-```
-
-Arguments r, g and b should be numbers between 0 and 255. For example, full red:
-
-```python
-fanshim.set_light(255, 0, 0)
-```
-
 ## Automatic Temperature Control
 
 `automatic.py` runs a control loop that maps CPU temperature to fan speed using a configurable step curve. Run it directly or via the systemd service installed by `install-service.sh`.
