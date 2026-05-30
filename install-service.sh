@@ -2,7 +2,7 @@
 set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-LIBRARY_DIR="$(dirname "$DIR")/library"
+LIBRARY_DIR="$DIR/library"
 VENV_PATH="/opt/fanshim-venv"
 SERVICE_PATH=/etc/systemd/system/pimoroni-fanshim.service
 SERVICE_NAME=pimoroni-fanshim.service
