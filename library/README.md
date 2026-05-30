@@ -86,10 +86,10 @@ fanshim.set_light(255, 0, 0)
 
 ## Automatic Temperature Control
 
-`examples/automatic.py` runs a control loop that maps CPU temperature to fan speed using a configurable step curve. Run it directly or via the systemd service installed by `install-service.sh`.
+`automatic.py` runs a control loop that maps CPU temperature to fan speed using a configurable step curve. Run it directly or via the systemd service installed by `install-service.sh`.
 
 ```bash
-python3 examples/automatic.py --speed-steps "50:0,60:30,70:60,80:100" --verbose
+python3 automatic.py --speed-steps "50:0,60:30,70:60,80:100" --verbose
 ```
 
 The speed curve is defined as comma-separated `temp:speed%` breakpoints. Fan speed is linearly interpolated between steps. `--min-speed` sets a floor to prevent motor stall at low duty cycles.
