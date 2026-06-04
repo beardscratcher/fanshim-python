@@ -19,7 +19,7 @@ parser.add_argument('--delay', type=float, default=2.0,
                     help='Seconds between temperature readings')
 parser.add_argument('--noled', action='store_true', default=False,
                     help='Disable LED control')
-parser.add_argument('--brightness', type=float, default=255.0,
+parser.add_argument('--brightness', type=float, default=128.0,
                     help='LED brightness 0-255')
 parser.add_argument('--verbose', action='store_true', default=False,
                     help='Print temperature and speed each cycle')

@@ -10,7 +10,7 @@ SERVICE_NAME=pimoroni-fanshim.service
 SPEED_STEPS="40:0,50:50,60:100"
 MIN_SPEED=20
 DELAY=2
-BRIGHTNESS=255
+BRIGHTNESS=128
 NOLED="no"
 
 USAGE="sudo ./install-service.sh [--speed-steps <steps>] [--min-speed <n>] [--delay <n>] [--brightness <n>] [--noled] [--venv <path>]"
