@@ -11,7 +11,7 @@ from fanshim import FanShim
 from fanshim_curve import apply_min_speed, parse_speed_steps, speed_for_temp
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--speed-steps', type=str, default='50:0,60:30,70:60,80:100',
+parser.add_argument('--speed-steps', type=str, default='40:0,50:30,60:60,70:100',
                     help='Comma-separated temp:speed%% breakpoints e.g. "50:0,60:30,70:60,80:100"')
 parser.add_argument('--min-speed', type=float, default=20.0,
                     help='Minimum fan speed %% when not fully off (prevents motor stall)')

@@ -7,7 +7,7 @@ VENV_PATH="/opt/fanshim-venv"
 SERVICE_PATH=/etc/systemd/system/pimoroni-fanshim.service
 SERVICE_NAME=pimoroni-fanshim.service
 
-SPEED_STEPS="50:0,60:30,70:60,80:100"
+SPEED_STEPS="40:0,50:30,60:60,70:100"
 MIN_SPEED=20
 DELAY=2
 BRIGHTNESS=255
