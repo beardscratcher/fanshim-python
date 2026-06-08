@@ -68,3 +68,9 @@ When bumping the version, update both `library/setup.cfg` (`version =`) and `lib
 ## Git Repository Root
 
 The git repository is rooted at `fanshim-python/`, not the top-level working directory. Use `git -C fanshim-python/` or `cd` there before running git commands.
+
+## On-Device Service Notes
+
+- Pi hostname: `alice`, service runs as root, files live at `/root/fanshim-python/`
+- **Always run `install-service.sh` from inside `fanshim-python/`** — the script uses `$BASH_SOURCE` to compute `$DIR`, so running it from the wrong directory bakes an incorrect `ExecStart` path into the unit file, causing silent service failure on next reboot.
+- DietPi sends SIGTERM to services during automated maintenance (~19:00 daily). "Deactivated successfully" in the journal is a clean stop, not a crash — the service restarts automatically via `Restart=on-failure`.
