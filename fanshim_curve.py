@@ -19,9 +19,7 @@ def speed_for_temp(temp, steps):
 
 
 def apply_min_speed(speed, min_speed):
-    """Floor non-zero speeds to min_speed to prevent motor stall at low duty cycles."""
-    if speed <= 0.0:
-        return 0.0
+    """Floor speed to min_speed — fan always runs, never stops."""
     return max(speed, float(min_speed))
 
 

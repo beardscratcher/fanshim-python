@@ -40,8 +40,8 @@ def test_min_speed_passes_through_above_floor():
     assert apply_min_speed(30.0, 20.0) == 30.0
 
 
-def test_min_speed_zero_stays_zero():
-    assert apply_min_speed(0.0, 20.0) == 0.0
+def test_min_speed_zero_floored_to_min():
+    assert apply_min_speed(0.0, 20.0) == 20.0
 
 
 def test_parse_speed_steps_basic():
