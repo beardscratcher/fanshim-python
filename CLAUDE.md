@@ -21,7 +21,7 @@ python3 -m pytest tests/ -v
 # Run a single test
 python3 -m pytest tests/test_setup.py::test_setup -v
 
-# Run speed curve tests (from fanshim-python/)
+# Run speed curve tests (from repo root)
 python3 -m pytest examples/tests/ -v
 
 # Lint check
@@ -67,10 +67,10 @@ When bumping the version, update both `library/setup.cfg` (`version =`) and `lib
 
 ## Git Repository Root
 
-The git repository is rooted at `fanshim-python/`, not the top-level working directory. Use `git -C fanshim-python/` or `cd` there before running git commands.
+The git repository root IS the working directory (`/Users/nick/Developer/fanshim`). Do NOT prefix paths with `fanshim-python/` — files like `automatic.py`, `fanshim_curve.py`, and `install-service.sh` live at the repo root.
 
 ## On-Device Service Notes
 
-- Pi hostname: `alice`, service runs as root, files live at `/root/fanshim-python/`
+- Service runs as root, files live at `/root/fanshim-python/`
 - **Always run `install-service.sh` from inside `fanshim-python/`** — the script uses `$BASH_SOURCE` to compute `$DIR`, so running it from the wrong directory bakes an incorrect `ExecStart` path into the unit file, causing silent service failure on next reboot.
 - DietPi sends SIGTERM to services during automated maintenance (~19:00 daily). "Deactivated successfully" in the journal is a clean stop, not a crash — the service restarts automatically via `Restart=on-failure`.
