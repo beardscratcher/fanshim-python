@@ -8,7 +8,7 @@ SERVICE_PATH=/etc/systemd/system/pimoroni-fanshim.service
 SERVICE_NAME=pimoroni-fanshim.service
 
 SPEED_STEPS="40:20,50:30,55:100"
-MIN_SPEED=20
+MIN_SPEED=50
 DELAY=2
 BRIGHTNESS=128
 NOLED="no"
