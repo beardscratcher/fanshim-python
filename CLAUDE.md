@@ -65,6 +65,10 @@ When bumping the version, update both `library/setup.cfg` (`version =`) and `lib
 
 `automatic.py` argparse defaults and `install-service.sh` shell variables must stay in sync — both define speed-steps, min-speed, delay, brightness, and noled. Always update both files together.
 
+## Fan Speed Entry/Exit Points
+
+`automatic.py` sets fan speed explicitly in three places: startup (line ~30), the `clean_exit` SIGTERM handler, and the main loop. Any change to fan behaviour at startup or shutdown must update both the startup call and `clean_exit`.
+
 ## Git Repository Root
 
 The git repository root IS the working directory (`/Users/nick/Developer/fanshim`). Do NOT prefix paths with `fanshim-python/` — files like `automatic.py`, `fanshim_curve.py`, and `install-service.sh` live at the repo root.
