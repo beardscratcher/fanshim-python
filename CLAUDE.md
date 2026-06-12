@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is `fanshim-python`, a Python library for the [Pimoroni Fan Shim](https://www.pimoroni.com) hardware accessory for Raspberry Pi. It controls a fan (GPIO pin 18) via lgpio PWM and an RGB APA-102 LED (SPI via pins 14/15). Button support has been removed.
 
-The library is in `fanshim-python/library/fanshim/__init__.py` — the entire public API lives in that single file (`FanShim` class). Speed curve logic lives in `fanshim_curve.py` at repo root (pure Python, no hardware imports). `automatic.py` at repo root is the primary runnable script (temperature→PWM speed curve with LED colour feedback). `examples/` contains reference scripts only (LED demos, legacy button API).
+The library is in `fanshim-python/library/fanshim/__init__.py` — the entire public API lives in that single file (`FanShim` class). Hysteresis logic lives in `fan_control.py` at repo root (pure `hysteresis()` function, no hardware imports). `automatic.py` at repo root is the primary runnable script (on/off hysteresis control with LED colour feedback). `examples/` contains reference scripts only (LED demos, legacy button API).
 
 **Deployment target:** Raspberry Pi 4 8GB, DietPi v10.4.2, Python 3.13, aarch64.
 
@@ -21,8 +21,8 @@ python3 -m pytest tests/ -v
 # Run a single test
 python3 -m pytest tests/test_setup.py::test_setup -v
 
-# Run speed curve tests (from repo root)
-python3 -m pytest examples/tests/ -v
+# Run hysteresis tests (from repo root)
+python3 -m pytest tests/ -v
 
 # Lint check
 flake8 --ignore E501
@@ -41,7 +41,7 @@ find . -type d -name __pycache__ | xargs rm -rf && make check
 
 ## Testing Architecture
 
-Tests run on non-Raspberry Pi machines by mocking hardware dependencies. `library/tests/conftest.py` provides fixtures that inject mocks for `lgpio`, `apa102`, `spidev`, and `atexit` into `sys.modules` before importing `FanShim`, then clean them up after each test. Test functions must explicitly declare which fixtures they need — none are autouse. `examples/tests/conftest.py` adds the repo root to `sys.path` so `fanshim_curve` (at root) is importable without installation.
+Tests run on non-Raspberry Pi machines by mocking hardware dependencies. `library/tests/conftest.py` provides fixtures that inject mocks for `lgpio`, `apa102`, `spidev`, and `atexit` into `sys.modules` before importing `FanShim`, then clean them up after each test. Test functions must explicitly declare which fixtures they need — none are autouse. `tests/conftest.py` (repo root) adds the repo root to `sys.path` so `fan_control` is importable without installation.
 
 ## Hardware / lgpio Constraints
 
@@ -63,15 +63,15 @@ When bumping the version, update both `library/setup.cfg` (`version =`) and `lib
 
 ## Mirrored Defaults
 
-`automatic.py` argparse defaults and `install-service.sh` shell variables must stay in sync — both define speed-steps, min-speed, delay, brightness, and noled. Always update both files together.
+`automatic.py` argparse defaults and `install-service.sh` shell variables must stay in sync — both define on-threshold, off-threshold, on-debounce, delay, brightness, and noled. Always update both files together.
 
-## Fan Speed Entry/Exit Points
+## Fan On/Off Control Points
 
-`automatic.py` sets fan speed explicitly in three places: startup (line ~30), the `clean_exit` SIGTERM handler, and the main loop. Any change to fan behaviour at startup or shutdown must update both the startup call and `clean_exit`.
+`automatic.py` calls `set_fan_speed()` in three places: startup (line ~34, sets 0.0), the `clean_exit` SIGTERM handler (sets 0.0), and the main loop (sets 1.0 on, 0.0 off). The fan is binary — no PWM partial speeds. Any change to fan behaviour at startup or shutdown must update both the startup call and `clean_exit`.
 
 ## Git Repository Root
 
-The git repository root IS the working directory (`/Users/nick/Developer/fanshim`). Do NOT prefix paths with `fanshim-python/` — files like `automatic.py`, `fanshim_curve.py`, and `install-service.sh` live at the repo root.
+The git repository root IS the working directory (`/Users/nick/Developer/fanshim`). Do NOT prefix paths with `fanshim-python/` — files like `automatic.py`, `fan_control.py`, and `install-service.sh` live at the repo root.
 
 ## On-Device Service Notes
 
