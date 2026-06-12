@@ -7,20 +7,23 @@ VENV_PATH="/opt/fanshim-venv"
 SERVICE_PATH=/etc/systemd/system/pimoroni-fanshim.service
 SERVICE_NAME=pimoroni-fanshim.service
 
-SPEED_STEPS="40:20,50:30,55:100"
-MIN_SPEED=50
+ON_THRESHOLD=60
+OFF_THRESHOLD=50
+ON_DEBOUNCE=1
 DELAY=2
 BRIGHTNESS=128
 NOLED="no"
 
-USAGE="sudo ./install-service.sh [--speed-steps <steps>] [--min-speed <n>] [--delay <n>] [--brightness <n>] [--noled] [--venv <path>]"
+USAGE="sudo ./install-service.sh [--on-threshold <n>] [--off-threshold <n>] [--on-debounce <n>] [--delay <n>] [--brightness <n>] [--noled] [--venv <path>]"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-    --speed-steps)
-        SPEED_STEPS="$2"; shift 2;;
-    --min-speed)
-        MIN_SPEED="$2"; shift 2;;
+    --on-threshold)
+        ON_THRESHOLD="$2"; shift 2;;
+    --off-threshold)
+        OFF_THRESHOLD="$2"; shift 2;;
+    --on-debounce)
+        ON_DEBOUNCE="$2"; shift 2;;
     --delay)
         DELAY="$2"; shift 2;;
     --brightness)
@@ -39,13 +42,14 @@ if [ "$NOLED" == "yes" ]; then EXTRA_ARGS+=" --noled"; fi
 
 cat <<EOF
 Fan Shim service setup:
-  Speed steps : $SPEED_STEPS
-  Min speed   : $MIN_SPEED %
-  Delay       : $DELAY s
-  Brightness  : $BRIGHTNESS
-  Disable LED : $NOLED
-  Venv        : $VENV_PATH
-  Service     : $SERVICE_PATH
+  On threshold  : $ON_THRESHOLD °C
+  Off threshold : $OFF_THRESHOLD °C
+  On debounce   : $ON_DEBOUNCE readings
+  Delay         : $DELAY s
+  Brightness    : $BRIGHTNESS
+  Disable LED   : $NOLED
+  Venv          : $VENV_PATH
+  Service       : $SERVICE_PATH
 
 EOF
 
@@ -81,7 +85,7 @@ After=multi-user.target
 [Service]
 Type=simple
 WorkingDirectory=$DIR
-ExecStart=$VENV_PATH/bin/python3 $DIR/automatic.py --speed-steps "$SPEED_STEPS" --min-speed "$MIN_SPEED" --delay "$DELAY" --brightness "$BRIGHTNESS"$EXTRA_ARGS
+ExecStart=$VENV_PATH/bin/python3 $DIR/automatic.py --on-threshold "$ON_THRESHOLD" --off-threshold "$OFF_THRESHOLD" --on-debounce "$ON_DEBOUNCE" --delay "$DELAY" --brightness "$BRIGHTNESS"$EXTRA_ARGS
 Restart=on-failure
 RestartSec=5
 
