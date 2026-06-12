@@ -7,13 +7,15 @@ import time
 import psutil
 
 from fanshim import FanShim
-from fanshim_curve import apply_min_speed, parse_speed_steps, speed_for_temp
+from fan_control import hysteresis
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--speed-steps', type=str, default='40:20,50:30,55:100',
-                    help='Comma-separated temp:speed%% breakpoints e.g. "50:20,60:30,70:60,80:100"')
-parser.add_argument('--min-speed', type=float, default=50.0,
-                    help='Minimum fan speed %% — fan never stops below this')
+parser.add_argument('--on-threshold', type=float, default=60.0,
+                    help='Temperature in °C to turn the fan on. Default: 60.0')
+parser.add_argument('--off-threshold', type=float, default=50.0,
+                    help='Temperature in °C to turn the fan off. Default: 50.0')
+parser.add_argument('--on-debounce', type=int, default=1,
+                    help='Consecutive readings above on-threshold before fan starts. Default: 1')
 parser.add_argument('--delay', type=float, default=2.0,
                     help='Seconds between temperature readings')
 parser.add_argument('--noled', action='store_true', default=False,
@@ -21,17 +23,19 @@ parser.add_argument('--noled', action='store_true', default=False,
 parser.add_argument('--brightness', type=float, default=128.0,
                     help='LED brightness 0-255')
 parser.add_argument('--verbose', action='store_true', default=False,
-                    help='Print temperature and speed each cycle')
+                    help='Print temperature and fan state each cycle')
 
 args = parser.parse_args()
-steps = parse_speed_steps(args.speed_steps)
 
 fanshim = FanShim(disable_led=args.noled)
-fanshim.set_fan_speed(args.min_speed / 100.0)
+
+fan_on = False
+readings_above = 0
+fanshim.set_fan_speed(0.0)
 
 
 def clean_exit(signum, frame):
-    fanshim.set_fan_speed(args.min_speed / 100.0)
+    fanshim.set_fan_speed(0.0)
     if not args.noled:
         fanshim.set_light(0, 0, 0)
     sys.exit(0)
@@ -80,12 +84,24 @@ signal.signal(signal.SIGTERM, clean_exit)
 try:
     while True:
         temp = get_cpu_temp()
-        raw_speed = speed_for_temp(temp, steps)
-        speed = apply_min_speed(raw_speed, args.min_speed)
-        fanshim.set_fan_speed(speed / 100.0)
+
+        new_fan_on = hysteresis(fan_on, temp, args.on_threshold, args.off_threshold)
+
+        if not fan_on and new_fan_on:
+            readings_above += 1
+            if readings_above >= args.on_debounce:
+                fan_on = True
+                readings_above = 0
+                fanshim.set_fan_speed(1.0)
+        elif fan_on and not new_fan_on:
+            fan_on = False
+            readings_above = 0
+            fanshim.set_fan_speed(0.0)
+        else:
+            readings_above = 0
 
         if args.verbose:
-            print(f"Temp: {temp:05.2f}C  Speed: {speed:5.1f}%")
+            print(f"Temp: {temp:.1f}°C, Fan: {'on' if fan_on else 'off'}")
 
         if not args.noled:
             update_led(temp)
