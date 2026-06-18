@@ -10,10 +10,10 @@ from fanshim import FanShim
 from fan_control import hysteresis
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--on-threshold', type=float, default=60.0,
-                    help='Temperature in °C to turn the fan on. Default: 60.0')
-parser.add_argument('--off-threshold', type=float, default=50.0,
-                    help='Temperature in °C to turn the fan off. Default: 50.0')
+parser.add_argument('--on-threshold', type=float, default=50.0,
+                    help='Temperature in °C to turn the fan on. Default: 50.0')
+parser.add_argument('--off-threshold', type=float, default=40.0,
+                    help='Temperature in °C to turn the fan off. Default: 40.0')
 parser.add_argument('--on-debounce', type=int, default=1,
                     help='Consecutive readings above on-threshold before fan starts. Default: 1')
 parser.add_argument('--delay', type=float, default=2.0,

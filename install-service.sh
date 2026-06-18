@@ -7,8 +7,8 @@ VENV_PATH="/opt/fanshim-venv"
 SERVICE_PATH=/etc/systemd/system/pimoroni-fanshim.service
 SERVICE_NAME=pimoroni-fanshim.service
 
-ON_THRESHOLD=60
-OFF_THRESHOLD=50
+ON_THRESHOLD=50
+OFF_THRESHOLD=40
 ON_DEBOUNCE=1
 DELAY=2
 BRIGHTNESS=128

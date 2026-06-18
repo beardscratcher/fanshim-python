@@ -78,3 +78,17 @@ The git repository root IS the working directory (`/Users/nick/Developer/fanshim
 - Service runs as root, files live at `/root/fanshim-python/`
 - **Always run `install-service.sh` from inside `fanshim-python/`** — the script uses `$BASH_SOURCE` to compute `$DIR`, so running it from the wrong directory bakes an incorrect `ExecStart` path into the unit file, causing silent service failure on next reboot.
 - DietPi sends SIGTERM to services during automated maintenance (~19:00 daily). "Deactivated successfully" in the journal is a clean stop, not a crash — the service restarts automatically via `Restart=on-failure`.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live as local markdown files under `.scratch/`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default canonical strings — needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context — one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
