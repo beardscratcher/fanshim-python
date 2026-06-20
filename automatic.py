@@ -33,6 +33,8 @@ fan_on = False
 readings_above = 0
 fanshim.set_fan_speed(0.0)
 
+_last_temp = None
+
 
 def clean_exit(signum, frame):
     fanshim.set_fan_speed(0.0)
@@ -42,12 +44,17 @@ def clean_exit(signum, frame):
 
 
 def get_cpu_temp():
+    global _last_temp
     t = psutil.sensors_temperatures()
     for name in ['cpu-thermal', 'cpu_thermal']:
         if name in t:
-            return t[name][0].current
-    print("Warning: Unable to get CPU temperature!")
-    return 0.0
+            _last_temp = t[name][0].current
+            return _last_temp
+    if _last_temp is not None:
+        print(f"Warning: CPU temp sensor unavailable, holding last reading ({_last_temp:.1f}°C)")
+        return _last_temp
+    print("Warning: CPU temp sensor unavailable and no prior reading — skipping cycle")
+    return None
 
 
 # Colour stops mirroring DietPi's MOTD temperature bands.
@@ -84,6 +91,9 @@ signal.signal(signal.SIGTERM, clean_exit)
 try:
     while True:
         temp = get_cpu_temp()
+        if temp is None:
+            time.sleep(args.delay)
+            continue
 
         new_fan_on = hysteresis(fan_on, temp, args.on_threshold, args.off_threshold)
 

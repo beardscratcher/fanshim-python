@@ -13,8 +13,9 @@ ON_DEBOUNCE=1
 DELAY=2
 BRIGHTNESS=128
 NOLED="no"
+VERBOSE="no"
 
-USAGE="sudo ./install-service.sh [--on-threshold <n>] [--off-threshold <n>] [--on-debounce <n>] [--delay <n>] [--brightness <n>] [--noled] [--venv <path>]"
+USAGE="sudo ./install-service.sh [--on-threshold <n>] [--off-threshold <n>] [--on-debounce <n>] [--delay <n>] [--brightness <n>] [--noled] [--verbose] [--venv <path>]"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -30,6 +31,8 @@ while [[ $# -gt 0 ]]; do
         BRIGHTNESS="$2"; shift 2;;
     --noled)
         NOLED="yes"; shift;;
+    --verbose)
+        VERBOSE="yes"; shift;;
     --venv)
         VENV_PATH="$(realpath "${2%/}")"; shift 2;;
     *)
@@ -39,6 +42,7 @@ done
 
 EXTRA_ARGS=""
 if [ "$NOLED" == "yes" ]; then EXTRA_ARGS+=" --noled"; fi
+if [ "$VERBOSE" == "yes" ]; then EXTRA_ARGS+=" --verbose"; fi
 
 cat <<EOF
 Fan Shim service setup:
