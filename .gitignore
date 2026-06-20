@@ -19,3 +19,6 @@ library/debian/
 .pytest_cache
 .tox
 venv/
+*.sublime-project
+*.sublime-workspace
+resume.md

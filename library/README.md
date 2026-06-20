@@ -2,7 +2,7 @@
 
 > **Fork of [pimoroni/fanshim-python](https://github.com/pimoroni/fanshim-python)**
 >
-> This fork modernises the library for Linux kernel 5.x / 6.x (Raspberry Pi OS / DietPi), where the original RPi.GPIO backend fails silently or requires a compatibility shim. Key changes: GPIO control migrated to **lgpio** (the actively maintained successor), **PWM variable-speed** fan control replacing binary on/off switching, a **temperature→speed step curve** replacing fixed thresholds, and an updated install script compatible with the PEP 668 externally-managed Python environment on Debian Trixie.
+> This fork modernises the library for Linux kernel 5.x / 6.x (Raspberry Pi OS / DietPi), where the original RPi.GPIO backend fails silently or requires a compatibility shim. Key changes: GPIO control migrated to **lgpio** (the actively maintained successor), **on/off hysteresis fan control** with configurable thresholds and debounce, LED colour feedback mirroring DietPi's temperature bands, and an updated install script compatible with the PEP 668 externally-managed Python environment on Debian Trixie.
 >
 > Button support has been removed. See [`examples/button.py`](examples/button.py) for the original API if you want to re-implement it.
 
@@ -28,25 +28,25 @@ cd fanshim-python
 sudo ./install-service.sh
 ```
 
-The installer accepts options to tune the speed curve:
+The installer accepts options to tune the control loop:
 
 ```bash
 sudo ./install-service.sh \
-  --speed-steps "50:0,60:30,70:60,80:100" \
-  --min-speed 20 \
+  --on-threshold 50 \
+  --off-threshold 40 \
+  --on-debounce 1 \
   --delay 2 \
-  --brightness 255
+  --brightness 128 \
+  --noled
 ```
 
 ## Automatic Temperature Control
 
-`automatic.py` runs a control loop that maps CPU temperature to fan speed using a configurable step curve. Run it directly or via the systemd service installed by `install-service.sh`.
+`automatic.py` runs a control loop that turns the fan on when temperature exceeds `--on-threshold` and off when it falls below `--off-threshold`. `--on-debounce` requires N consecutive above-threshold readings before the fan starts, preventing brief spikes from triggering the fan. The LED shows a colour gradient from cyan (cool) to red (hot). Run it directly or via the systemd service installed by `install-service.sh`.
 
 ```bash
-python3 automatic.py --speed-steps "50:0,60:30,70:60,80:100" --verbose
+python3 automatic.py --on-threshold 50 --off-threshold 40 --verbose
 ```
-
-The speed curve is defined as comma-separated `temp:speed%` breakpoints. Fan speed is linearly interpolated between steps. `--min-speed` sets a floor to prevent motor stall at low duty cycles.
 
 # Changes in 0.1.0
 
@@ -58,21 +58,17 @@ The speed curve is defined as comma-separated `temp:speed%` breakpoints. Fan spe
 
 **Impact:** `python3-lgpio` is required (installed via apt by `install-service.sh`). The `pin_button` and `button_poll_delay` constructor parameters are gone — button support has been removed entirely.
 
-### PWM fan speed control
+### On/off hysteresis fan control
 
-**Why:** Binary on/off fan control causes premature bearing wear from repeated full-speed spin-up and spin-down cycles. A fan that briefly hits 65°C and drops back to 58°C will cycle continuously, stressing the motor and creating noise. Variable PWM speed means the fan can maintain a low steady speed that keeps temperatures stable without cycling.
+**Why:** Variable PWM speed at partial duty cycles risks motor stall and is harder to reason about. Binary on/off with hysteresis is simpler and reliable: one threshold to turn on, a lower threshold to turn off, and a debounce counter to ignore brief spikes.
 
-Fan control is now variable speed via PWM at 1000 Hz. The fan ramps proportionally to temperature rather than switching abruptly.
+`automatic.py` uses `--on-threshold` / `--off-threshold` hysteresis with an optional `--on-debounce` count. The `set_fan_speed(float)` library API is retained (0.0–1.0), but `automatic.py` only ever calls it with 0.0 or 1.0.
 
-**Impact:** `set_fan_speed(float)` is the primary new API. `set_fan(bool)` still works as a wrapper. `get_fan()` now returns a `float` (0.0–1.0) instead of an `int` (0/1).
+**Impact:** `--speed-steps` and `--min-speed` have been removed. Re-run `install-service.sh` to migrate.
 
-### Temperature→speed curve replaces thresholds
+### LED colour feedback
 
-**Why:** A single on/off threshold requires tuning two values that fight each other (hysteresis). A step curve is more intuitive — define what speed you want at what temperature — and naturally handles the transition zone without oscillation.
-
-`automatic.py` now uses a configurable step curve (`--speed-steps`) with linear interpolation and a minimum speed floor (`--min-speed`) to prevent motor stall at low duty cycles.
-
-**Impact:** All previous CLI args to `automatic.py` and `install-service.sh` have changed. Re-run `install-service.sh` to migrate.
+The APA102 LED shows a continuous colour gradient mirroring DietPi's MOTD temperature bands: cyan (≤30°C) → green (40°C) → yellow (50°C) → orange (60°C) → red (≥70°C). Use `--noled` to disable.
 
 ### Modernised install script
 

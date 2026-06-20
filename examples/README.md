@@ -1,6 +1,6 @@
 # examples/
 
-Reference and development scripts. The active scripts (`automatic.py`, `fanshim_curve.py`, `install-service.sh`) live at the repo root.
+Reference and development scripts. The active scripts (`automatic.py`, `install-service.sh`) live at the repo root.
 
 ## led.py
 
@@ -59,10 +59,3 @@ def hold_handler():
 state = fanshim.toggle_fan()
 ```
 
-## tests/
-
-Unit tests for `fanshim_curve.py`. Run from repo root:
-
-```bash
-python3 -m pytest examples/tests/ -v
-```
