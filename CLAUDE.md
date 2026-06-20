@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is `fanshim-python`, a Python library for the [Pimoroni Fan Shim](https://www.pimoroni.com) hardware accessory for Raspberry Pi. It controls a fan (GPIO pin 18) via lgpio PWM and an RGB APA-102 LED (SPI via pins 14/15). Button support has been removed.
+This is `fanshim-python`, a Python library for the [Pimoroni Fan Shim](https://www.pimoroni.com) hardware accessory for Raspberry Pi. It controls a fan (GPIO pin 18) via lgpio (binary on/off) and an RGB APA-102 LED (SPI via pins 14/15). Button support has been removed.
 
 The library is in `fanshim-python/library/fanshim/__init__.py` — the entire public API lives in that single file (`FanShim` class). Hysteresis logic lives in `fan_control.py` at repo root (pure `hysteresis()` function, no hardware imports). `automatic.py` at repo root is the primary runnable script (on/off hysteresis control with LED colour feedback). `examples/` contains reference scripts only (LED demos, legacy button API).
 
